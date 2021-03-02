@@ -66,7 +66,7 @@ public:
     }
 };
 
-class polygon { // проверка на выпуклость
+class polygon { 
 protected:
     std::vector <point> vertecies;
 public:
