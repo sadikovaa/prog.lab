@@ -79,7 +79,7 @@ public:
 
 class polygon {
 protected:
-    closed vertecies; // замкнутая ломанная!!
+    closed vertecies; 
 public:
     bool convex() const{
         int s;
