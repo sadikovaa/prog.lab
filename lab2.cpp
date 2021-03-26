@@ -7,18 +7,17 @@ typedef struct s{
 
 } monomial;
 
+bool comparator(monomial &m1, monomial &m2){
+    return m1.degree<m2.degree;
+}
+
 class polynomial{
 private:
     std::vector <monomial> members;
 public:
-    void sort(){
-        for (int i=0; i< members.size()-1; i++) {
-            int j = i - 1;
-            while (j >= 0 && members[j].degree > members[j + 1].degree) {
-                std::swap(members[j], members[j + 1]);
-                j--;
-            }
-        }
+      void sort(){
+        std::sort(members.begin(), members.end(), comparator);
+
     }
     int count() const{
         return members.size();
