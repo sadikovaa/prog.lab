@@ -40,13 +40,13 @@ public:
             members(p.members){
         sort();
     }
+    ~polynomial(){
+            members.clear();
+    }
     polynomial& operator = (const polynomial& p){
         if (&p != this)
             this->members=p.members;
         return *this;
-    }
-    ~polynomial(){
-        members.clear();
     }
     bool operator == (const polynomial& p){
         if (members.size() == p.count()){
