@@ -2,7 +2,7 @@
 #include <vector>
 
 typedef struct s{
-    int coefficient=0;
+    float coefficient=0;
     int degree=0;
 
 } monomial;
@@ -25,7 +25,7 @@ public:
     int degree(int i) const{
         return members[i].degree;
     }
-    int coefficient(int i) const{
+    float coefficient(int i) const{
         return members[i].coefficient;
     }
     monomial member(int i) const{
