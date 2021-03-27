@@ -34,7 +34,7 @@ public:
     explicit broken(const std::vector <point>& points):
         points(points){
         if(points.size() < 2)
-            throw points.size();
+            throw std::invalid_argument("Too few points!");
     }
     broken(const broken& b):
             points(b.points){
@@ -68,7 +68,7 @@ class closed : public broken{
 public:
     explicit closed (const  std:: vector <point>& points ) : broken(points){
         if(points.size() < 3)
-            throw points.size();
+            throw std::invalid_argument("Too few points!");
     }
     double length() const override{
         double l= broken::length();
@@ -79,7 +79,7 @@ public:
 
 class polygon {
 protected:
-    closed vertecies; 
+    closed vertecies; // замкнутая ломанная!!
 public:
     bool convex() const{
         int s;
@@ -98,9 +98,9 @@ public:
     explicit polygon( const std::vector <point> &vertecies):
             vertecies(vertecies){
             if (vertecies.size() < 3)
-                throw vertecies.size();
+                throw std::invalid_argument("Too few points!");
             if (!this->convex())
-                throw "Not convex!";
+                throw std::invalid_argument("Not convex!!");
     }
     polygon(const polygon& p):
             vertecies(p.vertecies){
@@ -132,11 +132,11 @@ class triangle : public polygon {
 public:
     explicit triangle (const std::vector <point> &vertecies) : polygon(vertecies){
             if (vertecies.size() != 3)
-                throw vertecies.size();
+                throw std::invalid_argument("It isn't a triangle!");
             double s1 = (this->vertecies.getpoint(2).kX()-this->vertecies.front().kX())*(this->vertecies.getpoint(1).kY()-this->vertecies.front().kY());
             double s2 = (this->vertecies.getpoint(1).kX()- this->vertecies.front().kX())*(this->vertecies.getpoint(2).kY()-this->vertecies.front().kY());
             if (s1 == s2)
-                throw "line";
+                throw std::invalid_argument("It's a line!");
     }
     double area() const override{
         double s=0.5*((this->vertecies.getpoint(1).kX()- this->vertecies.front().kX())*(this->vertecies.getpoint(2).kY()-this->vertecies.front().kY())-
@@ -149,11 +149,11 @@ class trapezoid : public polygon {
 public:
     explicit trapezoid (std::vector <point> &vertecies) : polygon(vertecies){
             if (vertecies.size() != 4)
-                throw vertecies.size();
+                throw std::invalid_argument("It isn't a trapezoid!");
             double cos1 = ((vertecies.front().kX()-vertecies[1].kX())*(vertecies[2].kX()-vertecies[3].kX())+ (vertecies.front().kY()-vertecies[1].kY())*(vertecies[2].kY()-vertecies[3].kY()))/(sqrt(pow(vertecies.front().kX()-vertecies[1].kX(),2)+pow(vertecies.front().kY()-vertecies[1].kY(),2))*sqrt(pow(vertecies[2].kX()-vertecies[3].kX(),2)+pow(vertecies[2].kY()-vertecies[3].kY(),2)));
             double cos2 = ((vertecies[1].kX()-vertecies[2].kX())*(vertecies[3].kX()-vertecies.front().kX())+ (vertecies[1].kY()-vertecies[2].kY())*(vertecies[3].kY()-vertecies.front().kY()))/(sqrt(pow(vertecies[1].kX()-vertecies[2].kX(),2)+pow(vertecies[3].kY()-vertecies.front().kY(),2))*sqrt(pow(vertecies[1].kX()-vertecies[2].kX(),2)+pow(vertecies[3].kY()-vertecies.front().kY(),2)));
             if(!((std::abs(cos1) == 1 and std::abs(cos2) != 1) or (std::abs(cos1) != 1 and std::abs(cos2) == 1)))
-                throw "twisted";
+                throw std::invalid_argument("Twisted!");
     }
 };
 
@@ -163,7 +163,7 @@ public:
         double side = (sqrt(pow(vertecies.front().kX() - vertecies[vertecies.size() - 1].kX(), 2) +pow(vertecies.front().kY() - vertecies[vertecies.size() - 1].kY(), 2)));
         for (int i = 0; i < vertecies.size() - 1; i++)
             if (sqrt(pow(vertecies[i].kX() - vertecies[i + 1].kX(), 2) + pow(vertecies[i].kY() - vertecies[i + 1].kY(), 2)) != side)
-                throw "different sides";
+                throw std::invalid_argument("Different sides!!");
     }
 };
 
