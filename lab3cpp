@@ -1,88 +1,150 @@
-#include "pugixml.hpp"
-#include <bits/stdc++.h>
+#include <iostream>
+#include "xml/pugixml.h"
+#include <vector>
+#include <algorithm>
 #include <Windows.h>
+#include <map>
+#include <string>
+#include <cmath>
 using namespace std;
 using namespace pugi;
+const string TRAM = "Трамвай";
+const string TROLL = "Троллейбус";
+const string BUS = "Автобус";
 
-struct Vertex {
-    pair<double,double> point;
-    bool used = false;
+struct stops{
+    string name;
+    float coordinate1=0;
+    float coordinate2=0;
+
 };
+
+void processing(map <string, vector <stops>> &transport, string &routes, struct stops &stop){
+    string new_route;
+    for(auto i : routes){
+        if (i == ','){
+            transport[new_route].push_back(stop);
+            new_route.clear();
+        } else {
+            new_route+=i;
+        }
+    }
+    transport[new_route].push_back(stop);
+}
+
+string max_count_stops (map <string, vector <stops>> &transport){
+    string max_route;
+    int max_size = 0;
+    for (const auto& i : transport) {
+        if (i.second.size() > max_size){
+            max_size=i.second.size();
+            max_route = i.first;
+        }
+    }
+    return max_route;
+}
+float length(struct stops &stop1, struct stops &stop2) {
+    return pow(pow(stop2.coordinate1 - stop1.coordinate1, 2) + pow(stop2.coordinate2 - stop1.coordinate2,2), 0.5);
+}
+
+map <string, float> lenght_route(map <string, vector <stops>> &transport){
+    map <string, float> len;
+    for (auto& i : transport) {
+        float l =0;
+        for (int j=0; j < i.second.size()-1; j++){
+            l +=length(i.second[j], i.second[j+1]);
+        }
+        len[i.first] = l;
+    }
+    return len;
+}
+
+string max_len_route(map <string, float> &transp_len){
+    string max_route;
+    int max_len = 0;
+    for (const auto& i : transp_len) {
+        if (i.second> max_len){
+            max_len=i.second;
+            max_route = i.first;
+        }
+    }
+    return max_route;
+}
+
+void find_streets(map <string, vector <string>> &streets, string &location, string &name){
+    string new_street;
+    for(auto i : location){
+        if (i == ','){
+            streets[new_street].push_back(name);
+            new_street.clear();
+        } else {
+            new_street+=i;
+        }
+    }
+    streets[new_street].push_back(name);
+}
+
+string max_count_streets(map <string, vector <string>> &streets){
+    string max_street;
+    int max_count = 0;
+    for (const auto& i : streets) {
+        if (i.second.size()> max_count){
+            max_count=i.second.size();
+            max_street = i.first;
+        }
+    }
+    return max_street;
+}
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
     xml_document doc;
-    doc.load_file("auto.xml");
+    doc.load_file("data.xml");
+    map <string, vector <stops>> tram;
+    map <string, vector <stops>> troll;
+    map <string, vector <stops>> bus;
+    map <string, vector <string>> streets;
     xml_node dataset = doc.child("dataset");
-    unordered_map<string, vector<Vertex>> tram_graph;
-    unordered_map<string, vector<Vertex>> troll_graph;
-    unordered_map<string, vector<Vertex>> bus_graph;
-    unordered_map<string, int> streets;
-    unordered_map<string, int> tram_routes;
-    unordered_map<string, int> troll_routes;
-    unordered_map<string, int> bus_routes;
-    vector<pair<string, double> > max_path(3, (make_pair("what", -1)));
-    int tram_max = 0;
-    int troll_max = 0;
-    int bus_max = 0;
-    string tram_max_route;
-    string troll_max_route;
-    string bus_max_route;
-    const string TRAM = "Трамвай";
-    const string TROLL = "Троллейбус";
-    const string BUS = "Автобус";
-    int street_max = 0;
-    string street;
-    for (xml_node stat = dataset.first_child(); stat; stat = stat.next_sibling()) {
-        string temp = stat.child_value("routes");
-        string new_route;
-        string temp_coord = stat.child_value("coordinates");
-        Vertex temp_point;
-        auto[x, y] = temp_point.point;
-        string coordinate;
-        for (size_t i = 0; i < temp_coord.size(); i++) {
-            if (temp_coord[i] == ',') {
-                coordinate.erase(0);
-            } else if (temp_coord[i] != ',')
-                coordinate += temp_coord[i];
-            if (i == temp_coord.size() - 1) {
-                coordinate.erase(0);
-            }
+    for (xml_node transport_station = dataset.first_child(); transport_station; transport_station=transport_station.next_sibling() ){
+        struct stops stop;
+        stop.name = transport_station.child_value("name_stopping");
+        string location = transport_station.child_value("location");
+        if (!location.empty())
+            find_streets(streets, location, stop.name);
+        string coordinates = transport_station.child_value("coordinates");
+        string c;
+        for(auto i : coordinates){
+            if (i == ','){
+                stop.coordinate1 = atof(c.c_str());
+                c.clear();
+            } else
+                c+=i;
         }
-
-        for (size_t i = 0; i < temp.size(); i++) {
-            if (temp[i] != ',' && temp[i] != '.') {
-                new_route += temp[i];
-            }
-            if (temp[i] == ',' || temp[i] == '.' || i == temp.size() - 1) {
-                if (stat.child_value("type_of_vehicle") == TRAM) {
-                    tram_routes[new_route] += 1;
-                    tram_graph[new_route].push_back(temp_point);
-                    if (tram_routes[new_route] > tram_max) {
-                        tram_max = tram_routes[new_route];
-                        tram_max_route = new_route;
-                    }
-                } else if (stat.child_value("type_of_vehicle") == TROLL) {
-                    troll_routes[new_route] += 1;
-                    troll_graph[new_route].push_back(temp_point);
-                    if (troll_routes[new_route] > troll_max) {
-                        troll_max = troll_routes[new_route];
-                        troll_max_route = new_route;
-                    }
-                } else if (stat.child_value("type_of_vehicle") == BUS) {
-                    bus_routes[new_route] += 1;
-                    bus_graph[new_route].push_back(temp_point);
-                    if (bus_routes[new_route] > bus_max) {
-                        bus_max = bus_routes[new_route];
-                        bus_max_route = new_route;
-                    }
-                }
-                new_route.erase(0);
-            }
-        }
+        stop.coordinate2 = atof(c.c_str());
+        string routes = transport_station.child_value("routes");
+        if (transport_station.child_value("type_of_vehicle") == TRAM)
+            processing(tram, routes, stop);
+        else if (transport_station.child_value("type_of_vehicle") == TROLL)
+            processing(troll, routes, stop);
+        else if (transport_station.child_value("type_of_vehicle") == BUS)
+            processing(bus, routes, stop);
     }
-    cout << "Max tram way length: " << tram_max << ", route number " << tram_max_route << endl;
-    cout << "Max troll way length: " << troll_max << ", route number " << troll_max_route << endl;
-    cout << "Max bus way length: " << bus_max << ", route number " << bus_max_route << endl;
+
+    map <string, float> tram_lenght = lenght_route(tram);
+    map <string, float> troll_lenght = lenght_route(troll);
+    map <string, float> bus_lenght = lenght_route(bus);
+
+
+    cout << "***1***\n";
+    cout <<"TRAM: "<< max_count_stops(tram) << "\n";
+    cout <<"TROLL: "<< max_count_stops(troll) << "\n";
+    cout <<"BUS: "<< max_count_stops(bus) << "\n";
+    cout << "***2***\n";
+    cout <<"TRAM: "<< max_len_route(tram_lenght) << "\n";
+    cout <<"TROLL: "<< max_len_route(troll_lenght) << "\n";
+    cout <<"BUS: "<< max_len_route(bus_lenght) << "\n";
+    cout << "***3***\n";
+    cout <<max_count_streets(streets) << "\n";
+
     return 0;
 }
