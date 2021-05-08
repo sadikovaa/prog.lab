@@ -49,8 +49,9 @@ template <typename IT, class C>
 bool is_sorted(IT begin, IT end, C cond) {
     IT curr = begin;
     while (curr != end){
-        if (cond(*(++curr), *begin))
+        if (cond(*(++curr), *(begin)))
             return false;
+        ++begin;
     }
     return true;
 }
@@ -81,9 +82,9 @@ template <typename IT, typename E>
 IT find_backward(IT begin, IT end, E el){
     IT last = end;
     while (begin != end) {
-        if (*end == el)
-            return end;
         --end;
+        if ( *end == el)
+            return end;
     }
     return last;
 }
@@ -94,10 +95,10 @@ bool is_pallindrome(IT begin, IT end, C cond){
     IT first = begin;
     IT last = end;
     while (begin != end && first!= end && last != begin){
+        --end;
         if (cond(*begin) != cond(*end))
             return false;
         ++begin;
-        --end;
     }
     return true;
 }
