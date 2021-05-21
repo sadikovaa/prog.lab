@@ -10,13 +10,18 @@ public:
         T* end;
         explicit Iterator():curr(nullptr), begin(nullptr), end(nullptr){}
         explicit Iterator(T* first, T* begin, T* end) : curr(first), begin(begin), end(end){}
+        Iterator( const Iterator &I){
+            this->curr=I.curr;
+            this->begin=I.begin;
+            this->end=I.end;
+        }
         Iterator & operator = (const Iterator& I){
             this->curr=I.curr;
             this->begin=I.begin;
             this->end=I.end;
             return *this;
         }
-        Iterator& operator+ (int n) {
+        Iterator& operator+ (const int n) {
             for(int i=0; i<n; i++){
                 ++curr;
                 if (curr == end)
@@ -24,11 +29,11 @@ public:
             }
             return *this;
         }
-        Iterator& operator- (int n) {
+        Iterator& operator- (const int n) {
             for(int i=0; i<n; i++){
                 --curr;
-                if (curr == end)
-                    curr = begin;
+                if (curr == begin)
+                    curr = end;
             }
             return *this;
         }
@@ -44,10 +49,12 @@ public:
             --curr;
             return *this;
         }
-
-        bool operator != (const Iterator& it) { return curr != it.curr;}
-        bool operator == (const Iterator& it) { return curr == it.curr;}
-        T& operator* () {return *curr;};
+        bool operator != (const Iterator& it) const { return curr != it.curr;}
+        bool operator == (const Iterator& it) const { return curr == it.curr;}
+        bool operator >(const Iterator& I) const {return this->curr > I.curr;}
+        bool operator <(const Iterator& I) const {return this->curr < I.curr;}
+        T& operator* () const {return *curr;};
+        T& operator-> () const {return curr;}
     };
 private:
     T* _buffer;
@@ -62,10 +69,11 @@ public:
         _head;
         --_tail;
     }
-    T& operator[] (const int&n){
-        if (n>0 && n <_n)
-            return _buffer[n];
-        return _buffer[0];
+    circular_buffer(const circular_buffer& b){
+        this->_buffer=b._buffer;
+        this->_n=b._n;
+        this->_head=b._head;
+        this->_tail=b._tail;
     }
     circular_buffer & operator = (const circular_buffer & b){
         this->_buffer=b._buffer;
@@ -75,9 +83,14 @@ public:
         return *this;
     }
 
-    T index(const int n) const{return _head+n;}
-    T begin() {return *_head.begin;}
-    T end() {return *_head.end;}
+    T& operator[] (const int&n) const{
+        if (n>0 && n <_n)
+            return _buffer[n];
+        return _buffer[0];
+    }
+
+    Iterator begin() {return _head;}
+    Iterator end() {return _head;}
 
     void push_front(T val){
         --_head;
@@ -98,15 +111,6 @@ public:
     void pop_back(){
         --_tail;
     }
-
-    void out(){
-        for(auto i=0; i<_n; i++){
-            std::cout << _buffer[i]<< "\n";
-        }
-        std::cout<<"Value of head: "<<*_head.curr<<"\n";
-        std::cout<<"Value of tail: "<<*_tail.curr<<"\n";
-    }
-
     void resize(int n){
         T* buffer = new T[n];
         int i=0;
@@ -121,6 +125,13 @@ public:
         _n=n;
         _head = Iterator(_buffer,_buffer, _buffer+_n);
         _tail = Iterator(_buffer+i,_buffer, _buffer+_n);
+    }
+    void out() const{
+        for(auto i=0; i<_n; i++){
+            std::cout << _buffer[i]<< "\n";
+        }
+        std::cout<<"Value of head: "<<*_head.curr<<"\n";
+        std::cout<<"Value of tail: "<<*_tail.curr<<"\n";
     }
 
 };
