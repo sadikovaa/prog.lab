@@ -135,9 +135,7 @@ public:
     const Iterator end() const {return Iterator(_tail, _begin, _end);}
     Iterator& front() const {return &Iterator(_head, _begin, _end);}
     Iterator& back() const {return &Iterator(_tail, _begin, _end);}
-    //добавить констанктные методы
-    //добавить front и back (ссылки!!)
-
+    
     void push_front(T val){
         minusminus(_head);
         *_head=val;
