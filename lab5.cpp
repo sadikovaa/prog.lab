@@ -16,9 +16,11 @@ public:
             this->end=I.end;
         }
         Iterator & operator = (const Iterator& I){
-            this->curr=I.curr;
-            this->begin=I.begin;
-            this->end=I.end;
+            if (this != I) {
+                this->curr = I.curr;
+                this->begin = I.begin;
+                this->end = I.end;
+            }
             return *this;
         }
         Iterator& operator+ (const int n) {
@@ -49,89 +51,132 @@ public:
             --curr;
             return *this;
         }
-        bool operator != (const Iterator& it) const { return curr != it.curr;}
-        bool operator == (const Iterator& it) const { return curr == it.curr;}
-        bool operator >(const Iterator& I) const {return this->curr > I.curr;}
-        bool operator <(const Iterator& I) const {return this->curr < I.curr;}
+        bool operator != (const Iterator& I) const { return curr != I.curr;}
+        bool operator == (const Iterator& I) const { return curr == I.curr;}
+    private:
+        size_t poz(const Iterator& I) const{
+            size_t n=0;
+            T* cur=I.begin;
+            while (cur != curr){
+                ++n;
+                ++cur;
+                if (cur == I.end)
+                    curr = I.begin;
+            }
+            return n;
+        }
+    public:
+        bool operator >(const Iterator& I) const {return poz(this) > poz(I);}
+        bool operator <(const Iterator& I) const {return poz(this) < poz(I);}
         T& operator* () const {return *curr;};
         T& operator-> () const {return curr;}
     };
+    
 private:
     T* _buffer;
     size_t _n;
-    Iterator _head;
-    Iterator _tail;
+    T* _head;
+    T* _tail;
+    T* _begin;
+    T* _end;
+
+    void plusplus(T*& curr){
+        ++curr;
+        if (curr == _end)
+            curr = _begin;
+    }
+    void minusminus(T*& curr){
+        if (curr == _begin)
+            curr = _end;
+        --curr;
+    }
 public:
     explicit circular_buffer(size_t n=1): _n(n){
         _buffer = new T[n];
-        _head = Iterator(_buffer,_buffer, _buffer+_n);
-        _tail = Iterator(_buffer,_buffer, _buffer+_n);
-        _head;
-        --_tail;
+        _head = _buffer;
+        _tail = _buffer;
+        _begin = _buffer;
+        _end = _buffer+_n;
     }
     circular_buffer(const circular_buffer& b){
         this->_buffer=b._buffer;
         this->_n=b._n;
         this->_head=b._head;
         this->_tail=b._tail;
+        this->_begin=b._begin;
+        this->_end=b._end;
     }
     circular_buffer & operator = (const circular_buffer & b){
-        this->_buffer=b._buffer;
-        this->_n=b._n;
-        this->_head=b._head;
-        this->_tail=b._tail;
+        if (this != b) {
+            this->_buffer = b._buffer;
+            this->_n = b._n;
+            this->_head = b._head;
+            this->_tail = b._tail;
+            this->_begin = b._begin;
+            this->_end = b._end;
+        }
         return *this;
     }
 
-    T& operator[] (const int&n) const{
+    T& operator[] (const int&n){
+        if (n>0 && n <_n)
+            return _buffer[n];
+        return _buffer[0];
+    }
+    const T& operator[] (const int&n) const{
         if (n>0 && n <_n)
             return _buffer[n];
         return _buffer[0];
     }
 
-    Iterator begin() {return _head;}
-    Iterator end() {return _head;}
+    Iterator begin() {return Iterator(_head, _begin, _end);}
+    Iterator end() {return Iterator(_tail, _begin, _end);}
+    const Iterator begin() const {return Iterator(_head, _begin, _end);}
+    const Iterator end() const {return Iterator(_tail, _begin, _end);}
+    Iterator& front() const {return &Iterator(_head, _begin, _end);}
+    Iterator& back() const {return &Iterator(_tail, _begin, _end);}
+    //добавить констанктные методы
+    //добавить front и back (ссылки!!)
 
     void push_front(T val){
-        --_head;
-        *_head.curr=val;
-        if (_head==_tail)
-            --_tail;
+        minusminus(_head);
+        *_head=val;
+        if (_tail == _head)
+            minusminus(_tail);
     }
 
     void pop_front(){
-        ++_head;
+        plusplus(_head);
     }
-    void push_back(T val){
-        ++_tail;
-        *_tail.curr=val;
-        if (_head==_tail)
-            ++_head;
+    void push_back(const T& val){
+        *_tail=val;
+        plusplus(_tail);
+        if (_tail == _head)
+            plusplus(_head);
     }
     void pop_back(){
-        --_tail;
+        minusminus(_tail);
     }
-    void resize(int n){
+    void resize(size_t n){
         T* buffer = new T[n];
         int i=0;
         while (_head != _tail && i<n){
-            buffer[i]=*_head.curr;
-            ++_head;
+            buffer[i]=*_head;
+            plusplus(_head);
             ++i;
         }
-        if (i<n)
-            buffer[i]=*_head.curr;
         _buffer=buffer;
         _n=n;
-        _head = Iterator(_buffer,_buffer, _buffer+_n);
-        _tail = Iterator(_buffer+i,_buffer, _buffer+_n);
+        _head = _buffer;
+        _tail = _buffer+i;
     }
-    void out() const{
+    void out(){
         for(auto i=0; i<_n; i++){
             std::cout << _buffer[i]<< "\n";
         }
-        std::cout<<"Value of head: "<<*_head.curr<<"\n";
-        std::cout<<"Value of tail: "<<*_tail.curr<<"\n";
+        std::cout<<"Value of first element: "<<*_head<<"\n";
+        minusminus(_tail);
+        std::cout<<"Value of last element: "<<*(_tail)<<"\n";
     }
 
 };
