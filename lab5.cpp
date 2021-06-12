@@ -81,7 +81,7 @@ public:
         }
 
 
-    public:
+    private:
         size_t poz(const Iterator &I) const {
             size_t n = 0;
             T *cur = I.head;
@@ -106,6 +106,48 @@ public:
         bool operator<=(const Iterator &I) const { return !(*this > I); }
 
         bool operator>=(const Iterator &I) const { return !(*this < I); }
+
+        T &operator*() const { return *curr; };
+
+        T &operator->() const { return curr; }
+    };
+
+    class const_Iterator {
+    public:
+        T *curr;
+        T *begin;
+        T *head;
+        T *end;
+
+        explicit const_Iterator(): curr(nullptr), begin(nullptr), head(nullptr), end(nullptr) {}
+
+        explicit const_Iterator(T *first, T *begin, T *end, T *head) : curr(first), begin(begin), head(head), end(end) {}
+
+    private:
+        size_t poz(const const_Iterator &I) const {
+            size_t n = 0;
+            T *cur = I.head;
+            while (cur != I.curr) {
+                if (cur == I.end)
+                    cur = I.begin;
+                ++n;
+                ++cur;
+            }
+            return n;
+        }
+
+    public:
+        bool operator!=(const  const_Iterator &I) const { return curr != I.curr; }
+
+        bool operator==(const const_Iterator &I) const { return curr == I.curr; }
+
+        bool operator>(const const_Iterator &I) const { return poz(*this) > poz(I); }
+
+        bool operator<(const const_Iterator &I) const { return poz(*this) < poz(I); }
+
+        bool operator<=(const const_Iterator &I) const { return !(*this > I); }
+
+        bool operator>=(const const_Iterator &I) const { return !(*this < I); }
 
         T &operator*() const { return *curr; };
 
@@ -179,6 +221,21 @@ public:
         return *(_tail - 1);
     }
 
+    const_Iterator const_begin() { return const_Iterator(_head, _begin, _begin + _n, _head); }
+
+    const_Iterator const_end() { return const_Iterator(_tail, _begin, _begin + _n, _head); }
+
+    const T &const_front() const { return _head; }
+
+    const T &const_back() const {
+        if (_tail == _begin) {
+            if (_head == _begin)
+                return *_tail;
+            return *(_begin + _n);
+        }
+        return *(_tail - 1);
+    }
+
     void push_front(const T &val) {
         minusminus(_head);
         alloc_traits::construct(_alloc, _head, val);
@@ -215,13 +272,15 @@ public:
         T *buffer = alloc_traits::allocate(_alloc, n + 1);
         int i = 0;
         while (_head != _tail && i < n) {
-            alloc_traits::construct(_alloc, *(buffer + i), *_head);
+            alloc_traits::construct(_alloc, (buffer + i), *_head);
+            alloc_traits::destroy(_alloc, (_head));
             plusplus(_head);
             ++i;
         }
-
-        for (auto j = 0; j < _n + 1; ++j)
-            alloc_traits::destroy(_alloc, (_buffer + j));
+        while (_head != _tail) {
+            alloc_traits::destroy(_alloc, (_head));
+            plusplus(_head);
+        }
         alloc_traits::deallocate(_alloc, _buffer, _n + 1);
         _buffer = buffer;
         _n = n;
@@ -231,6 +290,13 @@ public:
 
     size_t size() const {
         return _n;
+    }
+
+    void out(){
+        for (auto iter = _head; iter != _tail; plusplus(iter))
+            std::cout << *iter << "\n";
+        std::cout << "Value of first element: " << *_head << "\n";
+        std::cout << "Value of last element: " << back() << "\n";
     }
     friend std::ostream operator<<(std::ostream &out, circular_buffer& b);
 };
